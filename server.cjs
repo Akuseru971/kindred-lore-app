@@ -1,50 +1,47 @@
-const express = require('express');
-const path = require('path');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const { OpenAI } = require('openai');
-
-dotenv.config();
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+require("dotenv").config();
+const OpenAI = require("openai");
 
 const app = express();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const PORT = process.env.PORT || 10000;
 
 app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(bodyParser.json());
 
-app.post('/api/lore', async (req, res) => {
-  const { pseudo } = req.body;
+// ✅ Nouvelle façon d'initialiser OpenAI avec la v4
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// 🔮 Route API
+app.post("/api/lore", async (req, res) => {
+  const { pseudo, genre, role } = req.body;
 
   const prompt = `
-You are Kindred, the twin essences of death in Runeterra.
-You will now narrate the legend of a summoner named "${pseudo}" as a dialogue between Lamb and Wolf. The style is poetic, mysterious, and inspired by League of Legends lore, you create new one by putting the character in on of the famous regions of runeterra, putting him in relation with other existing champions.
-
-Format:
-Wolf: ...
-Lamb: ...
-(...)
-
-Make it immersive and atmospheric, 10-12 lines total.
+You are Lamb and Wolf from League of Legends.
+Write a poetic and mysterious lore for a ${genre.toLowerCase()} player named ${pseudo}, who plays as a ${role} in the world of Runeterra.
+Structure your response as a dialogue between Lamb and Wolf, using their tone and poetic style.
+End with a cryptic line from Lamb that leaves a sense of mystery.
 `;
 
   try {
-    const response = await openai.chat.completions.create({
-  model: 'gpt-4',
-  messages: [{ role: 'user', content: prompt }],
-  temperature: 0.9,
-});
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.9,
+      max_tokens: 700,
+    });
 
-
-const lore = response.choices[0].message.content;
-res.json({ lore });
-
+    res.json({ lore: completion.choices[0].message.content });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to generate lore' });
+    console.error("OpenAI error:", err);
+    res.status(500).json({ error: "Failed to summon Kindred's lore." });
   }
 });
 
-const PORT = process.env.PORT || 3000;
+// 🚀 Lancement du serveur
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
