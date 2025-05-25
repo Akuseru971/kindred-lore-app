@@ -22,13 +22,16 @@ app.post("/api/lore", async (req, res) => {
   const { pseudo, role, genre } = req.body;
   if (!pseudo || !role || !genre) return res.status(400).json({ error: "Missing parameters" });
 
-  const prompt = `Structure your response as a dialogue between Lamb and Wolf, using their tone and poetic style.
-The first sentence is always Wolf saying \"Tell me lamb, who is ${pseudo}?\" plus another sentence giving a surname in relation with the lore.
-Don't add the description from the narrator between the lines of the dialogues. Don't pay attention to the rôle itself to create the lore.
-Don't add narrator — when Wolf ends his sentence, it's Lamb's turn. I don't want to see any description like \"Wolf asked, eyes twinkling with curiosity beneath the veil of the eternal night.\"
+const basePrompt = (pseudo, genre, role) => `
+Structure your response as a dialogue between Lamb and Wolf, using their tone and poetic style.
+The first sentence is always Wolf saying "Tell me lamb, who is ${pseudo}?" plus another sentence giving a surname in relation with the lore.
+Don't add the description from the narrator between the lines of the dialogues.
+Don't pay attention to the rôle itself to create the lore.
+Don't add narrator — when Wolf ends his sentence, it's Lamb's turn. I don't want to see any description like "Wolf asked", "Lamb whispered", etc.
+The genre is ${genre.toLowerCase()}. Use it subtly if relevant.
+Return exactly 12 lines of dialogue, alternating between Wolf and Lamb.
 End with a cryptic line from Lamb that leaves a sense of mystery.
-Limit the response to exactly 12 lines of dialogue.
-Remember: the character is a ${genre.toLowerCase()} and their role is ${role}.`;
+`.trim();
 
   try {
     const chatCompletion = await openai.chat.completions.create({
