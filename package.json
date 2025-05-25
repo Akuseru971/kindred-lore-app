@@ -1,13 +1,9 @@
 {
   "name": "kindred-lore",
   "version": "1.0.0",
-"main": "server.cjs",
-
-
-",
+  "main": "server.cjs",
   "scripts": {
-  "start": "node server.cjs"
-
+    "start": "node server.cjs"
   },
   "dependencies": {
     "cors": "^2.8.5",
