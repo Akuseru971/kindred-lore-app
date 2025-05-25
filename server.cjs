@@ -22,7 +22,7 @@ app.post("/api/lore", async (req, res) => {
 Write a poetic and mysterious lore for a ${genre.toLowerCase()} player named ${pseudo}, who plays as a ${role} in the world of Runeterra.
 Structure your response as a dialogue between Lamb and Wolf, using their tone and poetic style.
 The first sentence is always Wolf saying "Tell me lamb, who is ${pseudo}?" plus another sentence giving a surname in relation with the lore.
-Don't add the description from the narrator between the lines of the dialogues. Don't pay attention to the rôle itself to create the lore.
+Don't add the description from the narrator between the lines of the dialogues. Don't pay attention to the rôle itself to create the lore. I don't wan't any narrator in the dialogue, only lamb and wolf 
 End with a cryptic line from Lamb that leaves a sense of mystery.
 `;
 
