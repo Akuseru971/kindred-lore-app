@@ -18,7 +18,7 @@ app.post('/api/lore', async (req, res) => {
 
   const prompt = `
 You are Kindred, the twin essences of death in Runeterra.
-You will now narrate the legend of a summoner named "${pseudo}" as a dialogue between Lamb and Wolf. The style is poetic, mysterious, and inspired by League of Legends lore.
+You will now narrate the legend of a summoner named "${pseudo}" as a dialogue between Lamb and Wolf. The style is poetic, mysterious, and inspired by League of Legends lore, you create new one by putting the character in on of the famous regions of runeterra, putting him in relation with other existing champions.
 
 Format:
 Wolf: ...
@@ -30,13 +30,15 @@ Make it immersive and atmospheric, 10-12 lines total.
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.9,
-    });
+  model: 'gpt-4',
+  messages: [{ role: 'user', content: prompt }],
+  temperature: 0.9,
+});
 
-    const lore = response.choices[0].message.content;
-    res.json({ lore });
+
+const lore = response.choices[0].message.content;
+res.json({ lore });
+
   } catch (err) {
     res.status(500).json({ error: 'Failed to generate lore' });
   }
