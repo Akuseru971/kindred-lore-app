@@ -1,92 +1,88 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const { OpenAI } = require('openai');
-const https = require('https');
+// server.cjs
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const dotenv = require("dotenv");
+const { OpenAI } = require("openai");
+const https = require("https");
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 app.use(cors());
 app.use(bodyParser.json());
 
-app.post('/api/lore', async (req, res) => {
-  const { pseudo, genre = 'man', role = 'mid' } = req.body;
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-  if (!pseudo) return res.status(400).json({ error: 'Missing pseudo' });
-
-  const prompt = `
-Structure your response strictly as a dialogue between Lamb and Wolf, using their poetic and mysterious tone.
-The first line must always be Wolf saying: "Tell me Lamb, who is ${pseudo}?" followed by another sentence giving a surname related to the lore.
-
-You MUST NOT include any narrative descriptions, such as "Wolf said", "Lamb whispered", or any action, setting, or emotional commentary. 
-Do NOT use any form of prose or narration outside of the actual spoken lines.
-
-Each line must begin directly with "Wolf:" or "Lamb:" — and nothing else. 
-Never insert a line of narration or a third-person observer.
-
-The total number of lines in the dialogue must be 12 maximum, alternating between Wolf and Lamb.
-
-End with a cryptic and mysterious line from Lamb.
-`;
-
+app.post("/api/lore", async (req, res) => {
   try {
+    const { pseudo = "Unknown", role = "mystery", genre = "being" } = req.body;
+
+    const prompt = `Structure your response as a dialogue between Lamb and Wolf, using their tone and poetic style.
+The first sentence is always Wolf saying \"Tell me lamb, who is ${pseudo}?\" plus another sentence giving a surname in relation with the lore.
+Don't add the description from the narrator between the lines of the dialogues. Don't pay attention to the rôle itself to create the lore.
+Don't add narrator — when Wolf ends his sentence, it's Lamb's turn. I don't want to see any description like \"Wolf asked, eyes twinkling with curiosity beneath the veil of the eternal night.\"
+End with a cryptic line from Lamb that leaves a sense of mystery.
+Make sure to include references that reflect the fact that this is a ${genre.toLowerCase()} player.
+Limit the conversation to a maximum of 12 replies.`;
+
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
+      model: "gpt-4",
+      messages: [{ role: "user", content: prompt }],
     });
 
     res.json({ lore: completion.choices[0].message.content });
-  } catch (error) {
-    console.error('Error generating lore:', error);
-    res.status(500).json({ error: 'Failed to generate lore' });
+  } catch (err) {
+    console.error("Lore generation failed:", err);
+    res.status(500).send("The voices refused to speak...");
   }
 });
 
-app.post('/api/preview', async (req, res) => {
-  const { line } = req.body;
+app.post("/api/preview", async (req, res) => {
+  try {
+    const { text = "Tell me lamb, who is the silent one?" } = req.body;
 
-  if (!line) return res.status(400).json({ error: 'Missing line' });
+    const ELEVENLABS_VOICE_ID = "MwzcTyuTKDKHFsZnTzKu";
+    const ELEVENLABS_MODEL_ID = "eleven_english_v2";
 
-  const options = {
-    hostname: 'api.elevenlabs.io',
-    path: '/v1/text-to-speech/MwzcTyuTKDKHFsZnTzKu/stream',
-    method: 'POST',
-    headers: {
-      'xi-api-key': process.env.ELEVEN_LABS_API_KEY,
-      'Content-Type': 'application/json',
-    },
-  };
+    const response = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`,
+      {
+        method: "POST",
+        headers: {
+          "xi-api-key": process.env.ELEVENLABS_API_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model_id: ELEVENLABS_MODEL_ID,
+          text,
+          voice_settings: {
+            stability: 0.3,
+            similarity_boost: 1.0,
+            style: 0.5,
+          },
+        }),
+      }
+    );
 
-  const data = JSON.stringify({
-    text: line.replace('Wolf:', '').trim(),
-    model_id: 'eleven_english_v2',
-    voice_settings: {
-      stability: 0.3,
-      similarity_boost: 1.0,
-      style: 0.5,
-    },
-  });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("ElevenLabs API Error:", errorText);
+      return res.status(500).send("Wolf voice could not be summoned");
+    }
 
-  const request = https.request(options, (response) => {
-    res.setHeader('Content-Type', 'audio/mpeg');
-    response.pipe(res);
-  });
-
-  request.on('error', (e) => {
-    console.error('Error with ElevenLabs API:', e);
-    res.status(500).json({ error: 'Wolf voice could not be summoned' });
-  });
-
-  request.write(data);
-  request.end();
+    const audioBuffer = await response.arrayBuffer();
+    res.set({
+      "Content-Type": "audio/mpeg",
+      "Content-Length": audioBuffer.byteLength,
+    });
+    res.send(Buffer.from(audioBuffer));
+  } catch (err) {
+    console.error("Voice preview error:", err);
+    res.status(500).send("Wolf voice could not be summoned");
+  }
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
