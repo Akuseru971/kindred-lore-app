@@ -22,13 +22,12 @@ app.post("/api/lore", async (req, res) => {
   const prompt = `
 Structure your response as a dialogue between Lamb and Wolf, using their tone and poetic style.
 The first sentence is always Wolf saying "Tell me lamb, who is ${pseudo}?" plus another sentence giving a surname in relation with the lore.
-Don't add the description from the narrator between the lines of the dialogues.
-Don't pay attention to the rôle itself to create the lore.
-I don't want any narrator — when Wolf ends his sentence, it's Lamb's turn.
-I don’t want to see anything like “Wolf asked, eyes twinkling with curiosity beneath the veil of the eternal night.”
-Limit your response to a maximum of 8 lines (4 each).
+Don't add the description from the narrator between the lines of the dialogues. Don't pay attention to the role itself to create the lore.
+Don't add narrator — when Wolf ends his sentence, it's Lamb's turn. I don't want to see any description like "Wolf asked, eyes twinkling with curiosity beneath the veil of the eternal night."
+Limit the entire dialogue to 8 lines maximum between Lamb and Wolf.
 End with a cryptic line from Lamb that leaves a sense of mystery.
 `;
+
 
   try {
     const completion = await openai.chat.completions.create({
