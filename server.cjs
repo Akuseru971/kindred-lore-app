@@ -20,13 +20,25 @@ app.post("/api/lore", async (req, res) => {
   try {
     const { pseudo = "Unknown", role = "mystery", genre = "being" } = req.body;
 
-    const prompt = `Structure your response as a dialogue between Lamb and Wolf, using their tone and poetic style.
-The first sentence is always Wolf saying \"Tell me lamb, who is ${pseudo}?\" plus another sentence giving a surname in relation with the lore.
-Don't add the description from the narrator between the lines of the dialogues. Don't pay attention to the rôle itself to create the lore.
-Don't add narrator — when Wolf ends his sentence, it's Lamb's turn. I don't want to see any description like \"Wolf asked, eyes twinkling with curiosity beneath the veil of the eternal night.\"
-End with a cryptic line from Lamb that leaves a sense of mystery.
-Make sure to include references that reflect the fact that this is a ${genre.toLowerCase()} player.
-Limit the conversation to a maximum of 12 replies.`;
+    const prompt = `
+Structure your response as a dialogue between Lamb and Wolf, using their poetic tone only.
+You must strictly respect this rule: DO NOT add any narrative descriptions between lines, such as "Wolf asked, eyes gleaming..." or "Lamb whispered gently...".
+Only alternate pure lines of dialogue between Lamb and Wolf.
+
+The response must always start with:
+Wolf: "Tell me lamb, who is ${pseudo}?" Followed by another sentence giving a surname in relation with the lore.
+
+You must not consider the player's role when building the lore.
+
+The player is a ${genre.toLowerCase()} who plays as a ${role} in the world of Runeterra.
+
+Limit the entire exchange to 12 lines of dialogue maximum (6 per character). Do not exceed.
+
+End with a cryptic sentence from Lamb that leaves a sense of mystery.
+
+Never break these rules. Never add a narrator. Only alternate dialogue.
+`;
+
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
