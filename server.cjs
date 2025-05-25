@@ -6,23 +6,27 @@ const { OpenAI } = require("openai");
 const https = require("https");
 
 dotenv.config();
-
 const app = express();
+const PORT = process.env.PORT || 10000;
+
 app.use(cors());
 app.use(bodyParser.json());
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const ELEVENLABS_VOICE_ID = "MwzcTyuTKDKHFsZnTzKu";
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 app.post("/api/lore", async (req, res) => {
-  const { pseudo = "Unknown", genre = "Unknown", role = "Unknown" } = req.body;
+  const { pseudo = "", genre = "man", role = "mid" } = req.body;
 
   const prompt = `
 Structure your response as a dialogue between Lamb and Wolf, using their tone and poetic style.
 The first sentence is always Wolf saying "Tell me lamb, who is ${pseudo}?" plus another sentence giving a surname in relation with the lore.
-Don't add the description from the narrator between the lines of the dialogues. Don't pay attention to the rôle itself to create the lore.
-Don't add narrator — when Wolf ends his sentence, it's Lamb's turn. I don't want to see any description like 'Wolf asked, eyes twinkling with curiosity beneath the veil of the eternal night.'
+Don't add the description from the narrator between the lines of the dialogues.
+Don't pay attention to the rôle itself to create the lore.
+I don't want any narrator — when Wolf ends his sentence, it's Lamb's turn.
+I don’t want to see anything like “Wolf asked, eyes twinkling with curiosity beneath the veil of the eternal night.”
+Limit your response to a maximum of 8 lines (4 each).
 End with a cryptic line from Lamb that leaves a sense of mystery.
 `;
 
@@ -32,42 +36,30 @@ End with a cryptic line from Lamb that leaves a sense of mystery.
       model: "gpt-4",
     });
 
-    const lore = completion.choices[0].message.content;
-    res.json({ lore });
+    res.json({ lore: completion.choices[0].message.content });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to summon Kindred." });
+    res.status(500).json({ error: "Kindred are silent..." });
   }
 });
 
-app.post("/api/preview", async (req, res) => {
-  const { text } = req.body;
-
-  if (!text || !ELEVENLABS_API_KEY) {
-    return res.status(400).json({ error: "Missing text or ElevenLabs API key." });
-  }
-
-  // Trouve la première ligne de Wolf
-  const wolfLineMatch = text.match(/^Wolf:\s*(.+)$/m);
-  const previewText = wolfLineMatch ? wolfLineMatch[1].trim() : null;
-
-  if (!previewText) {
-    return res.status(400).json({ error: "No valid Wolf line found for preview." });
-  }
+app.post("/api/preview-audio", async (req, res) => {
+  const { pseudo = "" } = req.body;
+  const wolfLine = `Tell me lamb, who is ${pseudo}? The name echoes like a shadow among graves.`;
 
   const options = {
     hostname: "api.elevenlabs.io",
-    path: `/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`,
+    path: "/v1/text-to-speech/MwzcTyuTKDKHFsZnTzKu/stream",
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "xi-api-key": ELEVENLABS_API_KEY,
+      "xi-api-key": process.env.ELEVEN_LABS_API_KEY,
     },
   };
 
   const data = JSON.stringify({
+    text: wolfLine,
     model_id: "eleven_english_v2",
-    text: previewText,
     voice_settings: {
       stability: 0.3,
       similarity_boost: 1.0,
@@ -75,19 +67,18 @@ app.post("/api/preview", async (req, res) => {
     },
   });
 
-  const elevenReq = https.request(options, (elevenRes) => {
+  const request = https.request(options, (response) => {
     res.setHeader("Content-Type", "audio/mpeg");
-    elevenRes.pipe(res);
+    response.pipe(res);
   });
 
-  elevenReq.on("error", (error) => {
-    console.error("ElevenLabs Error:", error);
+  request.on("error", (err) => {
+    console.error(err);
     res.status(500).json({ error: "Wolf voice could not be summoned." });
   });
 
-  elevenReq.write(data);
-  elevenReq.end();
+  request.write(data);
+  request.end();
 });
 
-const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
