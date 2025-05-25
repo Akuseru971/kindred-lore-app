@@ -10,14 +10,12 @@ const PORT = process.env.PORT || 10000;
 app.use(cors());
 app.use(bodyParser.json());
 
-// ✅ Nouvelle façon d'initialiser OpenAI avec la v4
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// 🔮 Route API
 app.post("/api/lore", async (req, res) => {
-  const { pseudo, genre, role } = req.body;
+  const { pseudo = "a summoner", genre = "unknown", role = "unknown" } = req.body;
 
   const prompt = `
 You are Lamb and Wolf from League of Legends.
@@ -41,7 +39,6 @@ End with a cryptic line from Lamb that leaves a sense of mystery.
   }
 });
 
-// 🚀 Lancement du serveur
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
