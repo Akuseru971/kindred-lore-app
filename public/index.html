@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kindred's Lore Whisper</title>
+  <style>
+    body {
+      font-family: 'Georgia', serif;
+      background-color: #0a0a0a;
+      color: #e0e0e0;
+      text-align: center;
+      padding: 50px;
+    }
+    input, button {
+      padding: 12px;
+      font-size: 16px;
+      margin: 10px;
+      border-radius: 8px;
+      border: none;
+    }
+    input {
+      width: 250px;
+    }
+    button {
+      background-color: #333;
+      color: white;
+      cursor: pointer;
+    }
+    pre {
+      text-align: left;
+      margin-top: 30px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Kindred's Lore Whisper</h1>
+  <p>Enter your summoner name, and let Lamb & Wolf whisper your fate...</p>
+  <input id="pseudo" type="text" placeholder="Your Summoner Name" />
+  <button onclick="generateLore()">Whisper</button>
+  <pre id="result"></pre>
+
+  <script>
+    async function generateLore() {
+      const pseudo = document.getElementById('pseudo').value;
+      const result = document.getElementById('result');
+      result.textContent = "Summoning Kindred...";
+
+      const response = await fetch('/api/lore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pseudo })
+      });
+
+      const data = await response.json();
+      typeWriterEffect(data.lore, result);
+    }
+
+    function typeWriterEffect(text, element, i = 0) {
+      if (i < text.length) {
+        element.textContent += text.charAt(i);
+        setTimeout(() => typeWriterEffect(text, element, i + 1), 25);
+      }
+    }
+  </script>
+</body>
+</html>
