@@ -27,7 +27,7 @@ Do NOT use any form of prose or narration outside of the actual spoken lines.
 Each line must begin directly with "Wolf:" or "Lamb:" — and nothing else. 
 Never insert a line of narration or a third-person observer.
 
-The total number of lines in the dialogue must be 8 maximum, alternating between Wolf and Lamb.
+The total number of lines in the dialogue must be 12 maximum, alternating between Wolf and Lamb.
 
 End with a cryptic and mysterious line from Lamb.
 `;
