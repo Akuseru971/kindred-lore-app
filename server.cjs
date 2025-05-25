@@ -32,7 +32,13 @@ End with a cryptic line from Lamb that leaves a sense of mystery.
       max_tokens: 700,
     });
 
-    res.json({ lore: completion.choices[0].message.content });
+    const fullLore = completion.choices[0].message.content;
+
+    // 🔎 Extraire la première phrase dite par Wolf
+    const match = fullLore.match(/Wolf:\s(.+?)([.!?])/);
+    const preview = match ? `Wolf: ${match[1]}${match[2]}` : "Wolf remains silent...";
+
+    res.json({ lore: fullLore, preview });
   } catch (err) {
     console.error("OpenAI error:", err);
     res.status(500).json({ error: "Failed to summon Kindred's lore." });
