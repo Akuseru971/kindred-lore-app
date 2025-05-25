@@ -21,7 +21,7 @@ app.post("/api/lore", async (req, res) => {
   const prompt = `
 You are Lamb and Wolf from League of Legends.
 Write a poetic and mysterious lore for a ${genre.toLowerCase()} player named ${pseudo}, who plays as a ${role} in the world of Runeterra.
-It has to be a dialogue between Lamb and Wolf, using their tone and poetic style.The first sentence is always Wolf, wo starts with "Tell me lamb, who is (pseudo)? + a first sentence teasing the story.
+It has to be a dialogue between Lamb and Wolf, using their tone and poetic style.The first sentence is always Wolf, wo starts with "Tell me lamb, who is (pseudo)? + a first sentence teasing the story. you don't need to write narrator descriptions, just the lines of the dialogue like this : Wolf: Tell me lamb
 End with a cryptic line from Lamb that leaves a sense of mystery.
 `;
 
