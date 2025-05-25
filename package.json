@@ -1,7 +1,8 @@
 {
   "name": "kindred-lore",
   "version": "1.0.0",
-  "main": "main": "server.cjs",
+"main": "server.cjs",
+
 
 ",
   "scripts": {
