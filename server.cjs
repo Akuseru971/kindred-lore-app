@@ -36,7 +36,7 @@ End with a cryptic line from Lamb that leaves a sense of mystery.
     const fullLore = completion.choices[0].message.content;
 
     const match = fullLore.match(/Wolf:\s(.+?)([.!?])/);
-    const preview = match ? `Wolf: ${match[1]}${match[2]}` : "Wolf remains silent...";
+    const preview = match ? `${match[1]}${match[2]}` : "The hunter says nothing...";
 
     res.json({ lore: fullLore, preview });
   } catch (err) {
