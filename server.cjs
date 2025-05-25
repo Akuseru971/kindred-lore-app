@@ -15,14 +15,13 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// 🔮 ROUTE DE GÉNÉRATION DU LORE
 app.post("/api/lore", async (req, res) => {
   const { pseudo = "a summoner", genre = "unknown", role = "unknown" } = req.body;
 
   const prompt = `
 You are Lamb and Wolf from League of Legends.
-Write a poetic and mysterious lore for a ${genre.toLowerCase()} player named ${pseudo}, who plays as a ${role} in the world of Runeterra. Even if it's a man or woman, it can be a creature too, you decide, higlight the story with other existing characters in the lore. the first sentence has to start always by "Tell me Lamb, who is (pseudo), and a little sentence to tease the story of the character 
-Structure your response as a dialogue between Lamb and Wolf, using their tone and poetic style. It needs to last a around 1 min so adapt the speech. It is a conversation so don't put dialogue description beteween each line
+Write a poetic and mysterious lore for a ${genre.toLowerCase()} player named ${pseudo}, who plays as a ${role} in the world of Runeterra.
+It has to be a dialogue between Lamb and Wolf, using their tone and poetic style.The first sentence is always Wolf, wo starts with "Tell me lamb, who is (pseudo)? + a first sentence teasing the story.
 End with a cryptic line from Lamb that leaves a sense of mystery.
 `;
 
@@ -36,7 +35,6 @@ End with a cryptic line from Lamb that leaves a sense of mystery.
 
     const fullLore = completion.choices[0].message.content;
 
-    // 🔎 Extraire la première phrase dite par Wolf
     const match = fullLore.match(/Wolf:\s(.+?)([.!?])/);
     const preview = match ? `Wolf: ${match[1]}${match[2]}` : "Wolf remains silent...";
 
@@ -47,16 +45,24 @@ End with a cryptic line from Lamb that leaves a sense of mystery.
   }
 });
 
-// 🔊 ROUTE AUDIO POUR LA PHRASE DE WOLF
+// 🔊 Route pour l'audio preview via ElevenLabs
 app.post("/api/preview-audio", async (req, res) => {
   const { text } = req.body;
 
+  console.log("▶️ Requested audio preview:", text);
+
   if (!text) {
+    console.warn("⚠️ No text provided for audio.");
     return res.status(400).json({ error: "Missing preview text." });
   }
 
   const voiceId = "MwzcTyuTKDKHFsZnTzKu"; // Wolf's voice
   const apiKey = process.env.ELEVEN_API_KEY;
+
+  if (!apiKey) {
+    console.error("❌ ElevenLabs API key missing!");
+    return res.status(500).json({ error: "Missing ElevenLabs API key." });
+  }
 
   const options = {
     hostname: "api.elevenlabs.io",
@@ -79,6 +85,11 @@ app.post("/api/preview-audio", async (req, res) => {
   });
 
   const request = https.request(options, (response) => {
+    if (response.statusCode !== 200) {
+      console.error(`🟥 ElevenLabs responded with status ${response.statusCode}`);
+      return res.status(500).json({ error: "ElevenLabs API failed." });
+    }
+
     res.setHeader("Content-Type", "audio/mpeg");
 
     response.on("error", (e) => {
@@ -90,7 +101,7 @@ app.post("/api/preview-audio", async (req, res) => {
   });
 
   request.on("error", (e) => {
-    console.error("Request error:", e);
+    console.error("❌ Request to ElevenLabs failed:", e);
     res.status(500).json({ error: "Failed to generate audio." });
   });
 
@@ -98,7 +109,6 @@ app.post("/api/preview-audio", async (req, res) => {
   request.end();
 });
 
-// 🚀 SERVER EN LIGNE
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
