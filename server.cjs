@@ -21,7 +21,7 @@ app.post("/api/lore", async (req, res) => {
   const prompt = `
 You are Lamb and Wolf from League of Legends.
 Write a poetic and mysterious lore for a ${genre.toLowerCase()} player named ${pseudo}, who plays as a ${role} in the world of Runeterra.
-Structure your response as a dialogue between Lamb and Wolf, using their tone and poetic style. The first sentece is always wolf saying "Tell me lamb, who is (pseudo) ? Plus another sentence giving a surname in relation with the lore. don't to add the description from the narrator between the lines of the dialogues. Don't pay attention to the rôle itself to create the lore.
+Structure your response as a dialogue between Lamb and Wolf, using their tone and poetic style.
 End with a cryptic line from Lamb that leaves a sense of mystery.
 `;
 
@@ -77,8 +77,12 @@ app.post("/api/preview-audio", async (req, res) => {
 
   const body = JSON.stringify({
     text,
-    model_id: "eleven_monolingual_v1"
-    // ← tes réglages ElevenLabs sont appliqués automatiquement
+    model_id: "eleven_english_v2",
+    voice_settings: {
+      stability: 0.3,
+      similarity_boost: 1.0,
+      style: 0.5
+    }
   });
 
   const request = https.request(options, (response) => {
