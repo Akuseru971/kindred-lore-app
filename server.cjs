@@ -19,11 +19,20 @@ app.post("/api/lore", async (req, res) => {
   const { pseudo = "a summoner", genre = "unknown", role = "unknown" } = req.body;
 
   const prompt = `
-Write a poetic and mysterious lore for a ${genre.toLowerCase()} player named ${pseudo}, who plays as a ${role} in the world of Runeterra.
-Structure your response as a dialogue between Lamb and Wolf, using their tone and poetic style.
-The first sentence is always Wolf saying "Tell me lamb, who is ${pseudo}?" plus another sentence giving a surname in relation with the lore.
-Don't add the description from the narrator between the lines of the dialogues. Don't pay attention to the rôle itself to create the lore. don' t add narrator, when Wolf end his sentence, this is lamb's turn, i don't want to see any ""Wolf asked, eyes twinkling with curiosity beneath the veil of the eternal night." I don' want this kind of description
-End with a cryptic line from Lamb that leaves a sense of mystery.
+You are to write only dialogue between Lamb and Wolf, characters from League of Legends.
+The format must be:
+Wolf: "Tell me lamb, who is ${pseudo}?" Then one poetic sentence giving a surname tied to the lore.
+Then Lamb replies. After that, dialogue continues naturally between them.
+
+Do NOT include any narration, description, setting, or scene direction.
+❌ No: "Wolf asked, eyes gleaming in the dark."
+❌ No: "Lamb replied softly, standing by his side."
+Only pure dialogue. No role analysis. No narrator voice.
+
+The tone must be poetic, mysterious, and fitting to their characters.
+End the dialogue with a final cryptic sentence from Lamb that leaves a sense of mystery.
+
+Only return the dialogue. No explanation or comment.
 `;
 
   try {
@@ -53,7 +62,7 @@ app.post("/api/preview-audio", async (req, res) => {
     return res.status(400).json({ error: "Missing preview text." });
   }
 
-  const voiceId = "MwzcTyuTKDKHFsZnTzKu"; // Wolf
+  const voiceId = "MwzcTyuTKDKHFsZnTzKu";
   const apiKey = process.env.ELEVEN_API_KEY;
 
   if (!apiKey) {
