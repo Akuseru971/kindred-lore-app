@@ -1,107 +1,100 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require("cors");
-const fetch = require("node-fetch");
-require("dotenv").config();
+// server.cjs
+import express from 'express';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { Configuration, OpenAIApi } from 'openai';
+import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
 
 const app = express();
-app.use(cors());
-app.use(bodyParser.json());
-
 const PORT = process.env.PORT || 10000;
 
-app.post("/api/lore", async (req, res) => {
-  const { pseudo, genre, role } = req.body;
+dotenv.config();
 
-  if (!pseudo || !genre || !role) {
-    return res.status(400).json({ error: "Missing required fields" });
+app.use(cors({ origin: 'https://kindred-ui.onrender.com' }));
+app.use(bodyParser.json());
+
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(configuration);
+
+const ELEVENLABS_VOICE_ID = 'MwzcTyuTKDKHFsZnTzKu';
+const ELEVENLABS_API_KEY = process.env.ELEVENLABS;
+
+app.post('/api/lore', async (req, res) => {
+  const { pseudo, role, genre } = req.body;
+
+  if (!pseudo || !role || !genre) {
+    return res.status(400).json({ error: 'Missing required parameters.' });
   }
 
-  const prompt = `
-Structure your response as a dialogue between Lamb and Wolf, using their tone and poetic style.
-The first sentence is always Wolf saying 'Tell me lamb, who is ${pseudo}?'
+  try {
+    const prompt = `Structure your response as a dialogue between Lamb and Wolf, using their tone and poetic style.
+The first sentence is always Wolf saying 'Tell me lamb, who is ${pseudo}?' 
 no narrator needed, only lamb and wolf talk, it's a dialogue with no additonnal descriptions
 Don't pay attention to the role itself to create the lore.
 Don't add narrator — when Wolf ends his sentence, it's Lamb's turn. I don't want to see any description like 'Wolf said', 'Lamb whispered', etc.
 Make sure there is no narration.
 Always generate exactly 12 lines of dialogue maximum.
 The lore is for a ${genre.toLowerCase()} player named ${pseudo}, who plays as a ${role} in the world of Runeterra.
-End with a cryptic line from Lamb that leaves a sense of mystery.
-`;
+End with a cryptic line from Lamb that leaves a sense of mystery.`;
 
-  try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4",
-        messages: [
-          {
-            role: "user",
-            content: prompt.trim(),
-          },
-        ],
-        temperature: 0.8,
-      }),
+    const completion = await openai.createChatCompletion({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
     });
 
-    const data = await response.json();
-    const lore = data.choices?.[0]?.message?.content;
-
-    if (!lore) {
-      return res.status(500).json({ error: "Failed to generate lore" });
-    }
-
+    const lore = completion.data.choices[0].message.content;
     res.json({ lore });
-  } catch (err) {
-    console.error("Error generating lore:", err);
-    res.status(500).json({ error: "Something went wrong generating the lore." });
+  } catch (error) {
+    console.error('Error generating lore:', error);
+    res.status(500).json({ error: 'Failed to generate lore.' });
   }
 });
 
-app.post("/api/preview-audio", async (req, res) => {
+app.post('/api/preview-audio', async (req, res) => {
   const { text } = req.body;
 
-  if (!text || typeof text !== "string") {
-    return res.status(400).json({ error: "Invalid or missing 'text' in request body." });
-  }
-
-  const voiceId = "MwzcTyuTKDKHFsZnTzKu";
-  const elevenApiKey = process.env.ELEVENLABS;
-
-  const payload = {
-    text: text.replace(/^Wolf:\s*/i, ""),
-    model_id: "eleven_english_v2",
-    voice_settings: {
-      stability: 0.3,
-      similarity_boost: 1.0,
-      style: 0.5,
-    },
-  };
+  if (!text) return res.status(400).json({ error: 'No text provided' });
 
   try {
-    const audioRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-      method: "POST",
+    const wolfLine = text.split('\n').find((line) => line.startsWith('Wolf:'));
+    if (!wolfLine) return res.status(400).json({ error: 'No Wolf line found.' });
+
+    const response = await axios({
+      method: 'POST',
+      url: `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`,
       headers: {
-        "xi-api-key": elevenApiKey,
-        "Content-Type": "application/json",
+        'xi-api-key': ELEVENLABS_API_KEY,
+        'Content-Type': 'application/json',
+        'Accept': 'audio/mpeg',
       },
-      body: JSON.stringify(payload),
+      data: {
+        text: wolfLine.replace(/^Wolf:\s*/i, ''),
+        model_id: 'eleven_english_v2',
+        voice_settings: {
+          stability: 0.3,
+          similarity_boost: 1.0,
+          style: 0.5,
+        },
+      },
+      responseType: 'arraybuffer',
     });
 
-    if (!audioRes.ok) {
-      throw new Error("Failed to generate audio preview");
-    }
-
-    const audioBuffer = await audioRes.arrayBuffer();
-    res.setHeader("Content-Type", "audio/mpeg");
-    res.send(Buffer.from(audioBuffer));
+    const filePath = path.join('/tmp', `wolf-preview-${Date.now()}.mp3`);
+    fs.writeFileSync(filePath, response.data);
+    res.sendFile(filePath);
   } catch (err) {
-    console.error("Audio preview failed:", err);
-    res.status(500).json({ error: "Wolf voice could not be summoned" });
+    console.error('Preview audio generation failed:', err);
+    res.status(500).json({ error: 'Wolf voice could not be summoned.' });
   }
 });
 
