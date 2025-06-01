@@ -1,3 +1,4 @@
+const axios = require("axios");
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
@@ -57,3 +58,43 @@ app.post("/api/lore", async (req, res) => {
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
+
+const axios = require("axios");
+
+app.post("/api/preview", async (req, res) => {
+  const { text } = req.body;
+  if (!text) {
+    return res.status(400).json({ error: "No text provided" });
+  }
+
+  try {
+    const response = await axios.post(
+      "https://api.elevenlabs.io/v1/text-to-speech/MwzcTyuTKDKHFsZnTzKu/stream",
+      {
+        text,
+        voice_settings: {
+          stability: 0.3,
+          style: 0.5,
+          similarity_boost: 1.0
+        }
+      },
+      {
+        headers: {
+          "xi-api-key": process.env.ELEVENLABS_API_KEY,
+          "Content-Type": "application/json"
+        },
+        responseType: "arraybuffer"
+      }
+    );
+
+    res.set({
+      "Content-Type": "audio/mpeg",
+      "Content-Disposition": 'inline; filename="preview.mp3"'
+    });
+    res.send(response.data);
+  } catch (error) {
+    console.error("Error generating preview audio:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to generate preview audio." });
+  }
+});
+
