@@ -59,8 +59,6 @@ app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
 
-const axios = require("axios");
-
 app.post("/api/preview", async (req, res) => {
   const { text } = req.body;
   if (!text) {
