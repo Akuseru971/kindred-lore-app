@@ -17,7 +17,7 @@ const openai = new OpenAI({
 const promptTemplate = `
 Structure your response as a dialogue between Lamb and Wolf, using their tone and poetic style.
 The first sentence is always Wolf saying 'Tell me lamb, who is \${pseudo}?'
-no narrator needed, only lamb and wolf talk, it's a dialogue with no additional descriptions.
+no narrator needed, only lamb and wolf talk, it's a dialogue with no additional descriptions. The structure is always "Wolf :" "and Lamb :" 
 Don't pay attention to the role itself to create the lore.
 Don't add narrator — when Wolf ends his sentence, it's Lamb's turn. I don't want to see any description like 'Wolf said', 'Lamb whispered', etc.
 Make sure there is no narration.
